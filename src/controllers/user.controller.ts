@@ -2,9 +2,10 @@ import e from "cors";
 import User from "../models/user.model";
 import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
+import { FastifyReply, FastifyRequest } from "fastify";
 
 class UserController {
-  async getAllUsers(req: any, res: any) {
+  async getAllUsers(req: FastifyRequest, res: FastifyReply) {
     try {
       const users = await User.find();
       res.status(200).send(users);
@@ -13,18 +14,16 @@ class UserController {
     }
   }
 
-  async getUserById(req: any, res: any) {
-    try {
-      const userId = req.params.id;
-      console.log(userId);
-      const user = await User.findOne({ _id: userId });
-      return user;
-    } catch (error) {
-      res.status(500).send({ message: "Erro ao listar usuários" });
-    }
-  }
-
-  async createUser(req: any, res: any) {
+  async createUser(
+    req: FastifyRequest<{
+      Body: {
+        name: string;
+        email: string;
+        password: string;
+      };
+    }>,
+    res: FastifyReply
+  ) {
     try {
       const { name, email, password } = req.body;
       const criptoPassword = bcrypt.hashSync(password, 10);
@@ -33,14 +32,24 @@ class UserController {
         return res.status(400).send({ message: "Email é obrigatório" });
       if (!password)
         return res.status(400).send({ message: "Senha é obrigatório" });
+
       const user = await User.create({ name, email, password: criptoPassword });
-      return user;
+
+      return res.status(201).send(user);
     } catch (error) {
-      res.status(500).send({ message: "Erro ao criar o usuário" });
+      return res.status(500).send({ message: "Erro ao criar o usuário" });
     }
   }
 
-  async login(req: any, res: any) {
+  async login(
+    req: FastifyRequest<{
+      Body: {
+        email: string;
+        password: string;
+      };
+    }>,
+    res: FastifyReply
+  ) {
     try {
       const { email, password } = req.body;
 
@@ -64,16 +73,16 @@ class UserController {
               expiresIn: "1d",
             }
           );
-          res.send({ token });
+          return res.send({ token });
         }
       }
       return res.status(401).send({ message: "Usuário ou senha inválidos" });
     } catch (error) {
-      res.status(400).send({ message: "Erro ao efetuar login" });
+      return res.status(400).send({ message: "Erro ao efetuar login" });
     }
   }
 
-  async updateUser(req: any, res: any) {}
-  async deleteUser(req: any, res: any) {}
+  async updateUser(req: FastifyRequest, res: FastifyReply) {}
+  async deleteUser(req: FastifyRequest, res: FastifyReply) {}
 }
 export default new UserController();

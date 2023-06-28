@@ -1,12 +1,17 @@
+import { FastifyInstance } from "fastify";
 import mongoose from "mongoose";
 
 const connection = process.env.MONGO_CONNECTION as string;
 
-mongoose
-  .connect(connection)
-  .then(() => {
-    console.log("Conectado a base de dados");
-  })
-  .catch((error) => {
-    console.log("Error ao conectar a base de dados", error);
-  });
+async function connect(fastify: FastifyInstance) {
+  mongoose
+    .connect(connection)
+    .then(() => {
+      fastify.log.info("Conectado a base de dados");
+    })
+    .catch((error) => {
+      fastify.log.error(error);
+    });
+}
+
+export default connect;

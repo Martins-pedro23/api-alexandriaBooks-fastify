@@ -1,12 +1,12 @@
+import { FastifyInstance } from 'fastify';
 import userController from '../controllers/user.controller';
 
-async function routes(fastify: any, options: any) {
-    fastify.get('/', userController.getAllUsers);
-    fastify.get('/:id', userController.getUserById);
-    fastify.post('/login', userController.login);
-    fastify.post('/', userController.createUser);
-    fastify.put('/:id', userController.updateUser);
-    fastify.delete('/:id', userController.deleteUser);
+async function routes(fastify: FastifyInstance) {
+    fastify.get('/users', userController.getAllUsers);
+    fastify.post('/users/login', userController.login);
+    fastify.post('/users', userController.createUser);
+    fastify.put('/users:id', userController.updateUser);
+    fastify.delete('/users:id', userController.deleteUser);
 }
 
 export default routes;
