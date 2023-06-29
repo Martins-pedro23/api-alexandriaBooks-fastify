@@ -82,7 +82,79 @@ class UserController {
     }
   }
 
-  async updateUser(req: FastifyRequest, res: FastifyReply) {}
+  async updateUser(
+    req: FastifyRequest<{
+      Body: {
+        id: string;
+        email: string;
+        password: string;
+        name: string;
+      };
+    }>,
+    res: FastifyReply
+  ) {
+    const { id, email, name } = req.body;
+
+    if (!id) return res.status(400).send({ message: "Id é obrigatório" });
+
+    try {
+      const user = await User.findByIdAndUpdate(id, {
+        email,
+        name,
+      });
+      return res.status(200).send(user);
+    } catch (error) {
+      return res.status(500).send({ message: "Erro ao atualizar o usuário" });
+    }
+  }
+
+  async updateUserPassword(
+    req: FastifyRequest<{
+      Body: {
+        id: string;
+        oldPassword: string;
+        newPassword: string;
+        email: string;
+      };
+    }>,
+    res: FastifyReply
+  ) {
+    const { id, oldPassword, newPassword } = req.body;
+    if (!id) return res.status(400).send({ message: "Id é obrigatório" });
+    if (!oldPassword)
+      return res.status(400).send({ message: "Senha é obrigatório" });
+    if (!newPassword)
+      return res.status(400).send({ message: "Senha nova é obrigatório" });
+    if (oldPassword === newPassword)
+      return res
+        .status(400)
+        .send({ message: "Senha nova não pode ser igual a senha antiga" });
+
+    const login = await User.findById(id);
+
+    if (!login)
+      return res.status(400).send({ message: "Usuário não encontrado" });
+
+    const verifyPassword = bcrypt.compareSync(
+      oldPassword,
+      login.password as string
+    );
+
+    if (!verifyPassword)
+      return res.status(400).send({ message: "Senha antiga inválida" });
+
+    const criptoPassword = bcrypt.hashSync(newPassword, 10);
+
+    try {
+      const user = await User.findByIdAndUpdate(id, {
+        password: criptoPassword,
+      });
+      return res.status(200).send(user);
+    } catch (error) {
+      return res.status(500).send({ message: "Erro ao atualizar o usuário" });
+    }
+  }
+
   async deleteUser(req: FastifyRequest, res: FastifyReply) {}
 }
 export default new UserController();
