@@ -108,7 +108,7 @@ class UserController {
     }
   }
 
-  async updateUserPassword(
+  async updatePassword(
     req: FastifyRequest<{
       Body: {
         id: string;
@@ -155,6 +155,39 @@ class UserController {
     }
   }
 
-  async deleteUser(req: FastifyRequest, res: FastifyReply) {}
+  async deleteUser(
+    req: FastifyRequest<{
+      Body: {
+        id: string;
+        password: string;
+      };
+    }>,
+    res: FastifyReply
+  ) {
+    const { id, password } = req.body;
+    if (!id) return res.status(400).send({ message: "Id é obrigatório" });
+    if (!password)
+      return res.status(400).send({ message: "Senha é obrigatório" });
+
+    const login = await User.findById(id);
+
+    if (!login)
+      return res.status(400).send({ message: "Usuário não encontrado" });
+
+    const verifyPassword = bcrypt.compareSync(
+      password,
+      login.password as string
+    );
+
+    if (!verifyPassword)
+      return res.status(400).send({ message: "Senha inválida" });
+
+    try {
+      await User.findByIdAndDelete(id);
+      return res.status(200).send({ message: "Usuário deletado com sucesso" });
+    } catch (error) {
+      return res.status(500).send({ message: "Erro ao deletar o usuário" });
+    }
+  }
 }
 export default new UserController();
